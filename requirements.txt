@@ -1,0 +1,8 @@
+pandas>=2.0
+numpy>=1.24
+plotly>=5.18
+nbformat>=5.9
+gymnasium>=0.29
+stable-baselines3>=2.3
+tqdm>=4.66
+scikit-learn>=1.3
