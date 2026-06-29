@@ -36,9 +36,10 @@ class ProjectConfig:
     # Path to your full MT4/MT5-style minute CSV.
     # Long Bid file (May 2003 – May 2026, ~23 years) — primary dataset: enough
     # history for several walk-forward folds plus a multi-year sealed test.
-    csv_path: Path = Path("data/XAUUSD_1 Min_Bid_2003.05.05_2026.05.31.csv")
-    # Short Ask file (Jan 2020 – Jan 2026, ~6 years) — kept as a fast smoke-test
-    # dataset; uncomment to fall back to it.
+    csv_path: Path = Path("data/XAUUSD_1m_2004_2025.csv")
+    # Original Long Bid file (May 2003 – May 2026):
+    #csv_path: Path = Path("data/XAUUSD_1 Min_Bid_2003.05.05_2026.05.31.csv")
+    # Short Ask file (Jan 2020 – Jan 2026):
     #csv_path: Path = Path("data/XAUUSD_1 Min_Ask_2020.01.09_2026.01.15.csv")
 
     # Your file column is usually exactly "Time (EET)".

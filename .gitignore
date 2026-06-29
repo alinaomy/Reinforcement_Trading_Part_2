@@ -1,0 +1,8 @@
+models
+outputs
+zip data
+data/
+*.csv
+__pycache__/
+*.pyc
+.DS_Store
