@@ -131,7 +131,8 @@ def compute_features(df: pd.DataFrame) -> tuple[pd.DataFrame, float]:
     """Return (feature_df, latest_atr) for the most recent bar."""
     feat, _ = add_stationary_features(df,
                                       atr_period=CFG.atr_period,
-                                      rsi_period=CFG.rsi_period)
+                                      rsi_period=CFG.rsi_period,
+                                      ema_spans=CFG.ema_spans)
     feat = feat.dropna(subset=FEATURE_COLS + ["atr"])
     if feat.empty:
         raise RuntimeError("Not enough bars to compute features — need more warmup data.")
@@ -252,7 +253,9 @@ def close_position(mt5, pos: LivePosition, symbol: str, dry_run: bool) -> bool:
     if result.retcode != mt5.TRADE_RETCODE_DONE:
         log.error("Close failed: %s  retcode=%s", result.comment, result.retcode)
         return False
-    log.info("Closed ticket=%s at %.2f  PnL=%.2f", pos.ticket, price, result.profit)
+    deals = mt5.history_deals_get(position=pos.ticket)
+    pnl = sum(d.profit for d in deals) if deals else float("nan")
+    log.info("Closed ticket=%s deal=%s at %.2f  PnL=%.2f", pos.ticket, result.deal, price, pnl)
     return True
 
 
