@@ -993,18 +993,23 @@ def train_sliding_walk_forward(
               f"  | train {len(tr):,}  val {len(va):,}  test {len(te):,} bars"
               f"  | TEST {te.index.min().date()}→{te.index.max().date()}  → {fold_dir}")
 
-        train(
-            total_timesteps=total_timesteps,
-            seed=seed,
-            out_dir=fold_dir,
-            train_episode_steps=train_episode_steps,
-            eval_freq=eval_freq_k,
-            dd_penalty=dd_penalty,
-            n_envs=n_envs,
-            device=device,
-            reveal_test=False,
-            datasets=(m1, feature_cols, tr, va, te),
-        )
+        # Resume support: skip folds that already completed successfully.
+        _fold_info = Path(fold_dir) / "run_info.json"
+        if _fold_info.exists():
+            print(f"  [SKIP] fold {k} already complete (run_info.json found) — resuming from next fold.")
+        else:
+            train(
+                total_timesteps=total_timesteps,
+                seed=seed,
+                out_dir=fold_dir,
+                train_episode_steps=train_episode_steps,
+                eval_freq=eval_freq_k,
+                dd_penalty=dd_penalty,
+                n_envs=n_envs,
+                device=device,
+                reveal_test=False,
+                datasets=(m1, feature_cols, tr, va, te),
+            )
 
         # Evaluate the deployable (best) checkpoint on val (reference) and on the
         # untouched TEST window (the honest out-of-sample result).

@@ -1,0 +1,2 @@
+Walk-forward consistency gate FAILED.
+The best model of the final fold (31) IS still saved to models/best_model/ and referenced by run_info.json (gate_passed=false) — but it is NOT gate-approved for live deployment. Inspect the per-fold summary before any use.

@@ -1,0 +1,25 @@
+{
+  "slug": "ppo_H1_sl1-1.5-2_tp1-1.5-2-3_3000k_seed42",
+  "model_path": "models/sliding/fold_25/ppo_H1_sl1-1.5-2_tp1-1.5-2-3_3000k_seed42.zip",
+  "vecnorm_path": "models/sliding/fold_25/ppo_H1_sl1-1.5-2_tp1-1.5-2-3_3000k_seed42_vecnorm.pkl",
+  "decision_timeframe": "H1",
+  "sl_atr_multipliers": [
+    1.0,
+    1.5,
+    2.0
+  ],
+  "tp_r_multipliers": [
+    1.0,
+    1.5,
+    2.0,
+    3.0
+  ],
+  "total_timesteps": 3000000,
+  "train_episode_steps": 2048,
+  "seed": 42,
+  "dd_penalty": 0.8,
+  "risk_fraction": 0.005,
+  "spread_price": 0.2,
+  "best_model_path": "models/sliding/fold_25/best_model/best_model.zip",
+  "best_model_vecnorm_path": "models/sliding/fold_25/best_model/best_model_vecnorm.pkl"
+}

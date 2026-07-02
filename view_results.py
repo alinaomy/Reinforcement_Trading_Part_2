@@ -117,6 +117,13 @@ def _split_bounds(
     return df.index.min(), df.index.max()
 
 
+def _to_tz_aware(ts: str | pd.Timestamp, tz: str) -> pd.Timestamp:
+    t = pd.Timestamp(ts)
+    if t.tzinfo is None:
+        t = t.tz_localize(tz, ambiguous=True, nonexistent="shift_forward")
+    return t
+
+
 def _filter_feat(
     feat: pd.DataFrame,
     start: str | pd.Timestamp | None,
@@ -126,11 +133,9 @@ def _filter_feat(
 ) -> pd.DataFrame:
     d = feat.copy()
     if start:
-        d = d.loc[pd.Timestamp(start).tz_localize(tz, ambiguous="infer",
-                                                   nonexistent="shift_forward"):]
+        d = d.loc[_to_tz_aware(start, tz):]
     if end:
-        d = d.loc[:pd.Timestamp(end).tz_localize(tz, ambiguous="infer",
-                                                  nonexistent="shift_forward")]
+        d = d.loc[:_to_tz_aware(end, tz)]
     if bars and bars < len(d):
         d = d.tail(bars)
     return d

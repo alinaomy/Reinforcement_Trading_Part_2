@@ -1,8 +1,24 @@
-models
-outputs
-zip data
+# ── Large data files ─────────────────────────────────────────────────────────
 data/
+zip data/
 *.csv
+
+# ── Training outputs (large, regenerable) ────────────────────────────────────
+outputs/
+
+# ── Model artifacts: exclude all per-fold training dirs ──────────────────────
+models/
+# BUT keep the deployable best model and its metadata (small, needed by connector)
+!models/
+!models/best_model/
+!models/best_model/**
+!models/run_info.json
+
+# ── Python cache ─────────────────────────────────────────────────────────────
 __pycache__/
 *.pyc
+*.pyo
+
+# ── OS / IDE ─────────────────────────────────────────────────────────────────
 .DS_Store
+.env
