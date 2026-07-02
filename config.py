@@ -58,7 +58,7 @@ class ProjectConfig:
     # decision_timeframe controls the bar at which the RL agent observes and
     # acts.  Use any key from _TF_TO_PANDAS: "M5", "H1", "H4", "D1", etc.
     execution_timeframe: str = "1min"
-    decision_timeframe: str = "H1"
+    decision_timeframe: str = "M5"
 
     # DEMO MODE: set to None for a full production run.
     # 90 days ≈ 25 K M5 bars / ~2 K H1 bars. Enough for pipeline smoke-tests
@@ -108,10 +108,10 @@ class ProjectConfig:
     #
     # Note on cost: with a 6-month step over ~23 years you get ~34 folds, i.e.
     # ~34 model trainings. Raise sliding_step_months (e.g. 12) to halve the count.
-    sliding_train_years: float = 5.0
-    sliding_val_months: int = 6
-    sliding_test_months: int = 6
-    sliding_step_months: int = 6
+    sliding_train_years: float = 1.0
+    sliding_val_months: int = 2
+    sliding_test_months: int = 2
+    sliding_step_months: int = 2
 
     # ── Walk-forward deployment gate ─────────────────────────────────────────
     # After the folds finish, the final fold is promoted to the production slot
@@ -133,20 +133,24 @@ class ProjectConfig:
     atr_period: int = 14
     rsi_period: int = 14
     warmup_bars: int = 250
+    # EMA spans: calibrated to decision_timeframe.
+    # H1 defaults: (20, 50, 200) ≈ 20h / 2d / 8d
+    # M5 scalping:  (5, 20, 50)  ≈ 25m / 1.7h / 4.2h
+    ema_spans: Tuple[int, int, int] = (5, 20, 50)
 
     # Bracket choices for the RL action space.
-    sl_atr_multipliers: Tuple[float, ...] = (1.0, 1.5, 2.0)
-    tp_r_multipliers: Tuple[float, ...] = (1.0, 1.5, 2.0, 3.0)
+    sl_atr_multipliers: Tuple[float, ...] = (0.3, 0.5, 0.8)
+    tp_r_multipliers: Tuple[float, ...] = (0.5, 1.0, 1.5, 2.0)
 
     # Backtest/account model.
     initial_equity: float = 10_000.0
     risk_fraction: float = 0.005  # 0.5% equity risked per trade.
     spread_price: float = 0.20    # XAUUSD price units; adjust to your broker.
-    slippage_price: float = 0.02  # XAUUSD price units per side.
+    slippage_price: float = 0.05  # XAUUSD price units per side (higher at M5 speed).
     commission_per_trade: float = 0.01
 
     # Reward shaping.
-    holding_penalty: float = 0.00002
+    holding_penalty: float = 0.00001
     reward_mtm_weight: float = 0.01
 
     # ── PPO regularisation (generalisation-first preset) ─────────────────────
