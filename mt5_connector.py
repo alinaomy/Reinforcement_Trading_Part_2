@@ -260,14 +260,23 @@ def close_position(mt5, pos: LivePosition, symbol: str, dry_run: bool) -> bool:
 
 
 def open_bracket(mt5, pos: LivePosition, symbol: str,
-                 direction: int, sl_price: float, tp_price: float,
-                 lots: float, dry_run: bool) -> bool:
-    """Open a new bracket order with hard SL and TP."""
+                 direction: int, sl_dist: float, tp_r: float,
+                 lots: float, dry_run: bool) -> tuple[bool, float, float, float]:
+    """Open a new bracket order. SL/TP are recalculated from the live fill price
+    so they're always valid even if the market moved since the bar closed."""
     price = get_current_price(mt5, symbol, direction)
-    order_type = mt5.ORDER_TYPE_BUY if direction == 1 else mt5.ORDER_TYPE_SELL
 
-    sl_price = normalize_price(sl_price, mt5, symbol)
-    tp_price = normalize_price(tp_price, mt5, symbol)
+    # Clamp sl_dist to the broker's minimum stop distance so the order isn't rejected.
+    info = mt5.symbol_info(symbol)
+    if info is not None and info.trade_stops_level > 0:
+        min_dist = info.trade_stops_level * info.point
+        if sl_dist < min_dist:
+            log.warning("sl_dist %.5f below broker STOPLEVEL %.5f — clamping up", sl_dist, min_dist)
+            sl_dist = min_dist + info.point  # one tick above the minimum
+
+    sl_price = normalize_price(price - direction * sl_dist, mt5, symbol)
+    tp_price = normalize_price(price + direction * tp_r * sl_dist, mt5, symbol)
+    order_type = mt5.ORDER_TYPE_BUY if direction == 1 else mt5.ORDER_TYPE_SELL
 
     request = {
         "action":   mt5.TRADE_ACTION_DEAL,
@@ -286,17 +295,18 @@ def open_bracket(mt5, pos: LivePosition, symbol: str,
     if dry_run:
         log.info("[DRY-RUN] Would open %s  lots=%.2f  price≈%.2f  SL=%.2f  TP=%.2f",
                  DIR_LABEL[direction], lots, price, sl_price, tp_price)
-        return True
+        return True, price, sl_price, tp_price
 
     result = mt5.order_send(request)
     if result.retcode != mt5.TRADE_RETCODE_DONE:
-        log.error("Open failed: %s  retcode=%s", result.comment, result.retcode)
-        return False
+        log.error("Open failed: %s  retcode=%s  price=%.2f SL=%.2f TP=%.2f",
+                  result.comment, result.retcode, price, sl_price, tp_price)
+        return False, price, sl_price, tp_price
 
     pos.ticket = result.order
-    log.info("Opened %s ticket=%s  lots=%.2f  entry≈%.2f  SL=%.2f  TP=%.2f",
+    log.info("Opened %s ticket=%s  lots=%.2f  entry=%.2f  SL=%.2f  TP=%.2f",
              DIR_LABEL[direction], pos.ticket, lots, price, sl_price, tp_price)
-    return True
+    return True, price, sl_price, tp_price
 
 
 def sync_position_from_mt5(mt5, pos: LivePosition, symbol: str, equity: float) -> None:
@@ -389,22 +399,20 @@ def run_on_bar(mt5, model, venv, pos: LivePosition,
 
     # Open new position if model wants exposure
     if desired_dir != 0 and pos.direction == 0:
-        entry  = close + desired_dir * (CFG.spread_price / 2.0 + CFG.slippage_price)
-        sl     = entry - desired_dir * sl_dist
-        tp     = entry + desired_dir * tp_r * sl_dist
-        risk_cash = equity * CFG.risk_fraction
-        lots   = calc_lot_size(mt5, symbol, risk_cash, sl_dist)
-
         if not dry_run:
-            info   = mt5.account_info()
-            equity = info.equity if info else equity
+            acct   = mt5.account_info()
+            equity = acct.equity if acct else equity
 
-        success = open_bracket(mt5, pos, symbol, desired_dir, sl, tp, lots, dry_run)
-        if success and not dry_run:
+        risk_cash = equity * CFG.risk_fraction
+        lots      = calc_lot_size(mt5, symbol, risk_cash, sl_dist)
+
+        success, actual_entry, actual_sl, actual_tp = open_bracket(
+            mt5, pos, symbol, desired_dir, sl_dist, tp_r, lots, dry_run)
+        if success:
             pos.direction   = desired_dir
-            pos.entry_price = entry
-            pos.sl          = sl
-            pos.tp          = tp
+            pos.entry_price = actual_entry
+            pos.sl          = actual_sl
+            pos.tp          = actual_tp
             pos.tp_r        = tp_r
             pos.risk_cash   = risk_cash
             pos.units       = lots
