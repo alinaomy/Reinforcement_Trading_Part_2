@@ -73,6 +73,7 @@ def _load_features() -> tuple[pd.DataFrame, list[str]]:
         warmup_bars=CFG.warmup_bars,
         atr_period=CFG.atr_period,
         rsi_period=CFG.rsi_period,
+        ema_spans=CFG.ema_spans,
     )
     return feat, feature_cols
 

@@ -52,7 +52,7 @@ def add_time_features(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def add_stationary_features(df: pd.DataFrame, atr_period: int = 14, rsi_period: int = 14) -> Tuple[pd.DataFrame, List[str]]:
+def add_stationary_features(df: pd.DataFrame, atr_period: int = 14, rsi_period: int = 14, ema_spans: Tuple[int, int, int] = (20, 50, 200)) -> Tuple[pd.DataFrame, List[str]]:
     """Add causal technical indicators and stationary/relative features.
 
     Returns: (feature dataframe, list of columns intended for ML/RL observation)
@@ -61,9 +61,10 @@ def add_stationary_features(df: pd.DataFrame, atr_period: int = 14, rsi_period: 
 
     # Raw causal indicators.
     out["atr"] = atr(out, atr_period)
-    out["ema20"] = out["Close"].ewm(span=20, adjust=False, min_periods=20).mean()
-    out["ema50"] = out["Close"].ewm(span=50, adjust=False, min_periods=50).mean()
-    out["ema200"] = out["Close"].ewm(span=200, adjust=False, min_periods=200).mean()
+    s, m, l = ema_spans
+    out["ema20"]  = out["Close"].ewm(span=s, adjust=False, min_periods=s).mean()
+    out["ema50"]  = out["Close"].ewm(span=m, adjust=False, min_periods=m).mean()
+    out["ema200"] = out["Close"].ewm(span=l, adjust=False, min_periods=l).mean()
     out["rsi14"] = rsi(out["Close"], rsi_period)
 
     ema12 = out["Close"].ewm(span=12, adjust=False, min_periods=12).mean()
@@ -143,8 +144,8 @@ def add_stationary_features(df: pd.DataFrame, atr_period: int = 14, rsi_period: 
     return out, feature_cols
 
 
-def prepare_feature_frame(df: pd.DataFrame, warmup_bars: int = 250, atr_period: int = 14, rsi_period: int = 14):
-    feat, feature_cols = add_stationary_features(df, atr_period=atr_period, rsi_period=rsi_period)
+def prepare_feature_frame(df: pd.DataFrame, warmup_bars: int = 250, atr_period: int = 14, rsi_period: int = 14, ema_spans: Tuple[int, int, int] = (20, 50, 200)):
+    feat, feature_cols = add_stationary_features(df, atr_period=atr_period, rsi_period=rsi_period, ema_spans=ema_spans)
     feat = feat.iloc[warmup_bars:].copy()
     feat = feat.dropna(subset=feature_cols + ["atr", "ema20", "ema50", "ema200"])
     return feat, feature_cols

@@ -12,6 +12,7 @@ def assert_feature_stability_when_future_appended(
     cut_index: int,
     atr_period: int = 14,
     rsi_period: int = 14,
+    ema_spans: tuple[int, int, int] = (20, 50, 200),
     atol: float = 1e-10,
 ) -> bool:
     """Checks that features before cut_index do not change when future rows are present.
@@ -21,8 +22,8 @@ def assert_feature_stability_when_future_appended(
     past = df.iloc[:cut_index].copy()
     full = df.copy()
 
-    feat_past, _ = add_stationary_features(past, atr_period=atr_period, rsi_period=rsi_period)
-    feat_full, _ = add_stationary_features(full, atr_period=atr_period, rsi_period=rsi_period)
+    feat_past, _ = add_stationary_features(past, atr_period=atr_period, rsi_period=rsi_period, ema_spans=ema_spans)
+    feat_full, _ = add_stationary_features(full, atr_period=atr_period, rsi_period=rsi_period, ema_spans=ema_spans)
 
     common_idx = feat_past.index.intersection(feat_full.index)
     a = feat_past.loc[common_idx, feature_cols]
