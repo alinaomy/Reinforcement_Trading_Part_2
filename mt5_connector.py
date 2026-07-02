@@ -5,7 +5,7 @@ Runs on every completed H1 bar, computes features, queries the PPO model,
 and sends bracket orders (SL + TP set at entry) to MetaTrader 5.
 
 Requirements:
-    pip install MetaTrader5 stable-baselines3 gymnasium pandas numpy
+    pip install MetaTrader5 stable-baselines3 gymnasium pandas numpy python-dotenv
 
 Usage:
     python mt5_connector.py                  # live trading (real account)
@@ -18,6 +18,13 @@ import argparse
 import logging
 import os
 import time
+
+# Load .env file automatically so credentials don't need to be exported manually
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not installed; fall back to shell-exported env vars
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
