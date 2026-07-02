@@ -83,7 +83,18 @@ def load_model(model_path: str, vecnorm_path: str):
     venv.training    = False
     venv.norm_reward = False
 
-    model = PPO.load(model_path, env=venv)
+    # lr_schedule and learning_rate are saved as Python lambdas via cloudpickle.
+    # When the model was trained on Python 3.9 and loaded on Python 3.11+,
+    # the code object layout changed and cloudpickle cannot deserialize them.
+    # We override both with a constant that matches the original linear schedule
+    # end-value (0.0) — irrelevant for inference since no gradient steps are taken.
+    lr = CFG.ppo_learning_rate  # 6e-5
+    custom_objects = {
+        "learning_rate": lr,
+        "lr_schedule": lambda _: lr,
+    }
+
+    model = PPO.load(model_path, env=venv, custom_objects=custom_objects)
     log.info("Model loaded: %s", model_path)
     log.info("VecNorm loaded: %s", vecnorm_path)
     return model, venv
